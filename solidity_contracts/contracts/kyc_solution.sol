@@ -12,7 +12,7 @@ contract kyc {
         string userName;   //unique
         string data_hash;  //unique
         uint8 upvotes;
-        uint8 rating;
+        uint rating;
         address bank;
     }
 
@@ -23,7 +23,7 @@ contract kyc {
         address ethAddress;   //unique  
         string bankName;
         string regNumber;       //unique   
-        uint8 rating;
+        uint rating;
         uint kyc_count;
     }
 
@@ -87,6 +87,12 @@ contract kyc {
         kycRequests[_customerData].data_hash = _customerData;
         kycRequests[_customerData].userName = _userName;
         kycRequests[_customerData].bank = msg.sender;
+        if((banks[msg.sender].rating)*2 > 100){ // keep the rating interms of a multiple of 100*actual_rating(decimal value)
+            kycRequests[_customerData].isAllowed = true;
+        }
+        else{
+            kycRequests[_customerData].isAllowed = false;
+        }
         customerDataList.push(_customerData);
         return 1;
     }
@@ -96,8 +102,9 @@ contract kyc {
      * @param {string} _userName Name of the customer to be added
      * @param {string} _hash Hash of the customer's ID submitted for KYC
      */
-    function addCustomer(string memory _userName, string memory _customerData) public returns (uint8) {
+    function addCustomer(string memory _userName, string memory _customerData) public returns (uint8){
         require(customers[_userName].bank == address(0), "This customer is already present, please call modifyCustomer to edit the customer data");
+        require(kycRequests[_userName].isAllowed == false,"It is not allowed"); // if invalid bank adds a request dont process it
         customers[_userName].userName = _userName;
         customers[_userName].data_hash = _customerData;
         customers[_userName].bank = msg.sender;
