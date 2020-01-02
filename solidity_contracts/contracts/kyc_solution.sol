@@ -2,9 +2,9 @@ pragma solidity ^0.5.9;
 
 contract kyc {
 
-  
+
     address admin;
-    
+
     /*
     Struct for a customer
      */
@@ -12,6 +12,7 @@ contract kyc {
         string userName;   //unique
         string data_hash;  //unique
         uint8 upvotes;
+        uint8 rating;
         address bank;
     }
 
@@ -22,6 +23,8 @@ contract kyc {
         address ethAddress;   //unique  
         string bankName;
         string regNumber;       //unique   
+        uint8 rating;
+        uint kyc_count;
     }
 
     /*
@@ -31,6 +34,7 @@ contract kyc {
         string userName;     
         string data_hash;  //unique
         address bank;
+        bool isAllowed;
     }
 
     /*
