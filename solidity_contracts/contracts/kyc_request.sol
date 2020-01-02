@@ -1,11 +1,17 @@
 pragma solidity ^0.5.10;
 
 contract CustomerKYC{
-    
+
     struct customer{
         string name;
         string cData;
         uint256 upVote;
+        address bank;
+    }
+
+    struct request{
+        string name;
+        string cData;
         address bank;
     }
 
@@ -14,17 +20,15 @@ contract CustomerKYC{
         address ethAddress;
         string reqNumber;
     }
- 
-    mapping (string => customer) internal requestList;
+    mapping (string => request) internal requestList;
     mapping (string => customer) public customerList;
 
     function AddRequest(string memory name, string memory data)
     public alreadyInReq(name) returns(uint){
-        requestList[name] = customer({
+        requestList[name] = request({
             name:name,
             cData:data,
-            upVote:0,
-            bank:address(0)
+            bank:msg.sender
         });
 
         return 1;
