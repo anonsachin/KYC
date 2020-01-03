@@ -12,8 +12,8 @@ contract kyc {
         string userName;   //unique
         string data_hash;  //unique
         uint8 upvotes;
-        uint rating;
-        address bank;
+        uint rating;        // the rating is calculated using this formula = (number of votes*100/number of banks) 
+        address bank;       // if rating is greater than 50 move to final customer list
     }
 
     /*
@@ -64,6 +64,13 @@ contract kyc {
      */
     mapping(string => mapping(address => uint256)) upvotes;
 
+    /*
+    Mapping to represent the finalized list of customers
+    This is customers name to the customer struct
+     */
+     mapping( string => Customer) finalized_customers;
+     string[] verified;
+
     /**
      * Constructor of the contract.
      * We save the contract's admin as the account which deployed this contract.
@@ -108,7 +115,8 @@ contract kyc {
         customers[_userName].userName = _userName;
         customers[_userName].data_hash = _customerData;
         customers[_userName].bank = msg.sender;
-        customers[_userName].upvotes = 0;
+        customers[_userName].upvotes = 1;
+        customers[_userName].rating = (customers[_userName].upvotes*100)/bankAddresses.length;
         customerNames.push(_userName);
         return 1;
     }
@@ -169,6 +177,10 @@ contract kyc {
                 if(stringsEquals(customerNames[i],_userName))
                 {
                     customers[_userName].data_hash = _newcustomerData;
+                    if(removeFromVerified(_userName) == 1){
+                        customers[_userName].rating = 0;
+                        customers[_userName].upvotes = 0;
+                    }
                     return 1;
                 }
             
@@ -185,17 +197,54 @@ contract kyc {
         return (customers[_userName].userName, customers[_userName].data_hash, customers[_userName].upvotes, customers[_userName].bank);
     }
 
+    /* 
+     * Moves the customer to the verified list once rating is greater than 50% 
+     * @param {private} name Name of the customer
+     * @param {private} good The Customer struct object;
+    */
+    function addToVerified(string memory name,Customer memory good)private returns(uint8){
+        for(uint i = 0;i<verified.length;i++){
+            if(stringsEquals(verified[i],name)){
+                return 0;
+            }
+        }
+        finalized_customers[name] = good;
+        verified.push(name);
+        return 1;
+    }
+    // Remove from Verified
+    // @param {private} name Name of the customer
+    function removeFromVerified(string memory name)private returns(uint8){
+        for(uint i=0;i<verified.length;i++){
+            if(stringsEquals(verified[i],name)){
+                delete finalized_customers[name];
+                for(uint j=i+1; j<verified.length;j++){
+                    verified[j-1] = verified[j];
+                }
+                verified.length--;
+                return 1;
+            }
+        }
+        return 0;
+    }
+
     /**
      * Add a new upvote from a bank
      * @param {public} _userName Name of the customer to be upvoted
      */
     function Upvote(string memory _userName) public returns (uint8) {
+        require(upvotes[_userName][msg.sender] == 0,"You have already cast your vote");
         for(uint i = 0;i < customerNames.length;i++) 
             { 
                 if(stringsEquals(customerNames[i],_userName))
                 {
                     customers[_userName].upvotes++;
+                    customers[_userName].rating = (customers[_userName].upvotes*100)/bankAddresses.length;
                     upvotes[_userName][msg.sender] = now;//storing the timestamp when vote was casted, not required though, additional
+                    if(customers[_userName].rating > 50){
+                        addToVerified(_userName,customers[_userName]);
+                        removeCustomer(_userName);
+                    }
                     return 1;
                 }
             
