@@ -1,5 +1,5 @@
-const kyc_solution = artifacts.require("bank");
+const Bank = artifacts.require("Bank");
 
 module.exports = function(deployer) {
-  deployer.deploy(kyc_solution);
+  deployer.deploy(Bank);
 };
