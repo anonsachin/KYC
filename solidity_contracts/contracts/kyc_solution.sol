@@ -75,8 +75,8 @@ contract kyc {
      * Constructor of the contract.
      * We save the contract's admin as the account which deployed this contract.
      */
-    constructor() public {
-        admin = msg.sender;
+    constructor(address _admin) public {
+        admin = _admin;
     }
 
     /**
