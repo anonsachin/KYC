@@ -2,6 +2,11 @@ pragma solidity ^0.5.9;
 
 import "./kyc_solution.sol";
 
+/*
+ * It has all the admin facing calls in this contract
+ * Remaining all functions are Implented in the other contract
+ */
+
 contract Banks is kyc{
     constructor()public kyc(msg.sender){}
 

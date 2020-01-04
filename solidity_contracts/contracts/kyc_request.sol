@@ -67,7 +67,7 @@ contract CustomerKYC{
     }
 
     function upVote(string memory name) public checkInCust(name) returns(uint){
-        customerList[name].upVote +=1;
+        customerList[name].upVote += 1;
         return 1;
     }
 

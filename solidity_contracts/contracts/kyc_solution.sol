@@ -12,7 +12,7 @@ contract kyc {
         string userName;   //unique
         string data_hash;  //unique
         uint8 upvotes;
-        uint rating;        // the rating is calculated using this formula = (number of votes*100/number of banks) 
+        uint rating;        // the rating is calculated using this formula = (number of votes*100/number of banks)
         address bank;       // if rating is greater than 50 move to final customer list
     }
 
@@ -20,9 +20,9 @@ contract kyc {
     Struct for a Bank
      */
     struct Bank {
-        address ethAddress;   //unique  
+        address ethAddress;   //unique
         string bankName;
-        string regNumber;       //unique   
+        string regNumber;       //unique
         uint rating;
         uint kyc_count;
     }
@@ -31,7 +31,7 @@ contract kyc {
     Struct for a KYC Request
      */
     struct KYCRequest {
-        string userName;     
+        string userName;
         string data_hash;  //unique
         address bank;
         bool isAllowed;
@@ -68,7 +68,7 @@ contract kyc {
     Mapping to represent the finalized list of customers
     This is customers name to the customer struct
      */
-     mapping( string => Customer) finalized_customers;
+     mapping(string => Customer) finalized_customers;
      string[] verified;
 
     /**
@@ -127,16 +127,16 @@ contract kyc {
      * @return {uint8}         A 0 indicates failure, 1 indicates success
      */
     function removeKYCRequest(string memory _userName) public returns (uint8) {
-        uint8 i=0;
-        for (uint256 i = 0; i< customerDataList.length; i++) {
+        uint8 i = 0;
+        for (uint256 i = 0; i < customerDataList.length; i++){
             if (stringsEquals(kycRequests[customerDataList[i]].userName,_userName)) {
                 delete kycRequests[customerDataList[i]];
-                for(uint j = i+1;j < customerDataList.length;j++) 
-                { 
+                for(uint j = i+1;j < customerDataList.length;j++)
+                {
                     customerDataList[j-1] = customerDataList[j];
                 }
                 customerDataList.length --;
-                i=1;
+                i = 1;
             }
         }
         return i; // 0 is returned if no request with the input username is found.
@@ -148,12 +148,12 @@ contract kyc {
      * @return {uint8}         A 0 indicates failure, 1 indicates success
      */
     function removeCustomer(string memory _userName) public returns (uint8) {
-            for(uint i = 0;i < customerNames.length;i++) 
-            { 
+            for(uint i = 0;i < customerNames.length;i++)
+            {
                 if(stringsEquals(customerNames[i],_userName))
                 {
                     delete customers[_userName];
-                    for(uint j = i+1;j < customerNames.length;j++) 
+                    for(uint j = i+1;j < customerNames.length;j++)
                     {
                         customerNames[j-1] = customerNames[j];
                     }
@@ -171,19 +171,16 @@ contract kyc {
      * @param  {public} _hash New hash of the updated ID provided by the customer
      * @return {uint8}         A 0 indicates failure, 1 indicates success
      */
-    function modifyCustomer(string memory _userName, string memory _newcustomerData) public returns (uint8) {
-        for(uint i = 0;i < customerNames.length;i++) 
-            { 
-                if(stringsEquals(customerNames[i],_userName))
-                {
-                    customers[_userName].data_hash = _newcustomerData;
-                    if(removeFromVerified(_userName) == 1){
+    function modifyCustomer(string memory _userName, string memory _newcustomerData) public returns (uint8){
+        for(uint i = 0;i < customerNames.length;i++) {
+             if(stringsEquals(customerNames[i],_userName)){
+                if(removeFromVerified(_userName) == 1){// this function checks if the customer is verified if so deletes it from the list
+                        customers[_userName].data_hash = _newcustomerData; // and only then updates the data
                         customers[_userName].rating = 0;
                         customers[_userName].upvotes = 0;
                     }
                     return 1;
                 }
-            
             }
             return 0;
     }
@@ -197,8 +194,8 @@ contract kyc {
         return (customers[_userName].userName, customers[_userName].data_hash, customers[_userName].upvotes, customers[_userName].bank);
     }
 
-    /* 
-     * Moves the customer to the verified list once rating is greater than 50% 
+    /*
+     * Moves the customer to the verified list once rating is greater than 50%
      * @param {private} name Name of the customer
      * @param {private} good The Customer struct object;
     */
@@ -215,10 +212,10 @@ contract kyc {
     // Remove from Verified
     // @param {private} name Name of the customer
     function removeFromVerified(string memory name)private returns(uint8){
-        for(uint i=0;i<verified.length;i++){
+        for(uint i = 0;i<verified.length;i++){
             if(stringsEquals(verified[i],name)){
                 delete finalized_customers[name];
-                for(uint j=i+1; j<verified.length;j++){
+                for(uint j = i+1; j<verified.length;j++){
                     verified[j-1] = verified[j];
                 }
                 verified.length--;
@@ -234,8 +231,8 @@ contract kyc {
      */
     function Upvote(string memory _userName) public returns (uint8) {
         require(upvotes[_userName][msg.sender] == 0,"You have already cast your vote");
-        for(uint i = 0;i < customerNames.length;i++) 
-            { 
+        for(uint i = 0;i < customerNames.length;i++)
+            {
                 if(stringsEquals(customerNames[i],_userName))
                 {
                     customers[_userName].upvotes++;
@@ -247,7 +244,6 @@ contract kyc {
                     }
                     return 1;
                 }
-            
             }
             return 0;
         
@@ -260,7 +256,7 @@ contract kyc {
 // @return - This function returns true if strings are matched and false if the strings are not matching
     function stringsEquals(string storage _a, string memory _b) internal view returns (bool) {
         bytes storage a = bytes(_a);
-        bytes memory b = bytes(_b); 
+        bytes memory b = bytes(_b);
         if (a.length != b.length)
             return false;
         // @todo unroll this loop
@@ -270,6 +266,27 @@ contract kyc {
                 return false;
         }
         return true;
+    }
+/*
+ * This function returns all the request of a bank that are not yet been finalized
+ * @param {public} bank Address of the bank in question
+*/
+    function getBankRequests(address bank)public view returns(bytes32[] memory,bytes32[] memory,bool[] memory){
+        bytes32[] memory userNames;
+        bytes32[] memory hashes;
+        bool[] memory allowed;
+        uint j = 0;
+        for(uint i = 0;i<customerDataList.length; i++){
+            if(kycRequests[customerDataList[i]].bank == bank){
+                if(finalized_customers[kycRequests[customerDataList[i]].userName].bank == address(0)){ // this to check if the request has been finalized
+                    userNames[j] = bytes(kycRequests[customerDataList[i]].userName)[0]; // sending only the first string as array of arrys not properly implemented yet
+                    hashes[j] = bytes(kycRequests[customerDataList[i]].data_hash)[0]; // sending only the first string as the hash is just one long string and array of arrys not properly implemented yet
+                    allowed[j] = kycRequests[customerDataList[i]].isAllowed;
+                    j++;
+                }
+            }
+        }
+        return (userNames,hashes,allowed);
     }
 
 }
