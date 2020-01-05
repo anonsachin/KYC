@@ -1,4 +1,4 @@
-const Bank = artifacts.require("Bank");
+const Bank = artifacts.require("Banks");
 
 module.exports = function(deployer) {
   deployer.deploy(Bank);
