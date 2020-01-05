@@ -16,6 +16,9 @@ contract Banks is kyc{
     }
 /*
  * This function is adding a bank
+ * @param name {public} name Name of the bank
+ * @param _ethAddress {public} Address of bank
+ * @param reqNumber {public} Registration Number
 */
     function addBank(string memory name,address _ethAddress,string memory reqNumber)public isAdmin(msg.sender) returns(uint8){
         banks[_ethAddress] = Bank({
@@ -30,6 +33,10 @@ contract Banks is kyc{
         return 1;
     }
 
+    /*
+     * This function is removing a bank
+     * @param _ethAddress {public} Address of bank
+    */
     function removeBank(address _ethAddress)public isAdmin(msg.sender) returns(uint8){
         for(uint i = 0;i<bankAddresses.length;i++){
             if(bankAddresses[i] == _ethAddress){

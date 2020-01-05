@@ -2,7 +2,6 @@ pragma solidity ^0.5.9;
 
 contract kyc {
 
-
     address admin;
 
     /*
@@ -169,7 +168,7 @@ contract kyc {
                     customerNames.length--;
                     return 1;
                 }
-                
+
             }
             return 0;
     }
@@ -255,7 +254,6 @@ contract kyc {
                 }
             }
             return 0;
-        
     }
 
 // if you are using string, you can use the following function to compare two strings
