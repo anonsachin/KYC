@@ -1,4 +1,4 @@
-pragma solidity ^0.5.9;
+pragma solidity ^0.5.11;
 
 import "./kyc_solution.sol";
 
@@ -31,10 +31,10 @@ contract Banks is kyc{
     }
 
     function removeBank(address _ethAddress)public isAdmin(msg.sender) returns(uint8){
-        for(uint i=0;i<bankAddresses.length;i++){
+        for(uint i = 0;i<bankAddresses.length;i++){
             if(bankAddresses[i] == _ethAddress){
                 delete banks[_ethAddress];
-                for(uint j=i+1;j<bankAddresses.length;j++){
+                for(uint j = i+1;j<bankAddresses.length;j++){
                     bankAddresses[j-1] = bankAddresses[j];
                 }
                 return 1;

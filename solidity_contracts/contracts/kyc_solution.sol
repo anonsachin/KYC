@@ -19,7 +19,7 @@ contract kyc {
     /*
     Struct for a Bank
      */
-    struct Bank {
+    struct Bank{
         address ethAddress;   //unique
         string bankName;
         string regNumber;       //unique
@@ -75,6 +75,8 @@ contract kyc {
      mapping (address=>mapping(address=>bool)) bankVotes; // To keep track of the banks that have voted for other banks
                                             // It is of the form voting bank => voted bank => bool
 
+    mapping (string => string) Passwords;
+
     /**
      * Constructor of the contract.
      * We save the contract's admin as the account which deployed this contract.
@@ -114,7 +116,10 @@ contract kyc {
      * @param {string} _hash Hash of the customer's ID submitted for KYC
      */
     function addCustomer(string memory _userName, string memory _customerData) public returns (uint8){
-        require(customers[_userName].bank == address(0), "This customer is already present, please call modifyCustomer to edit the customer data");
+        require(
+            customers[_userName].bank == address(0),
+        "This customer is already present, please call modifyCustomer to edit the customer data"
+        );
         require(kycRequests[_userName].isAllowed == false,"It is not allowed"); // if invalid bank adds a request dont process it
         customers[_userName].userName = _userName;
         customers[_userName].data_hash = _customerData;
@@ -307,7 +312,7 @@ contract kyc {
         }
         return 0;
     }
-    // To make sure only banks can call the functions
+    // To make sure only banks can call the functionError: CompileError: UnimplementedFeatureError: Encoding type "structs
     modifier isABank(address bank){
         require(banks[bank].ethAddress != address(0),"you are not a bank");
         _;
@@ -323,5 +328,29 @@ contract kyc {
         return banks[bank].rating;
     }
 
-    
+    // Get the bank that made the last changed to the customer data
+    function retrieveAccessHist(string memory name)public view returns(address){
+        return customers[name].bank;
+    }
+
+    // returning individual bank details unable to return structs
+    function getBankDetails(address bank)public view returns(address,string memory,string memory,uint,uint,uint){
+        Bank memory ret = banks[bank];
+        return (
+            ret.ethAddress,
+            ret.bankName,
+            ret.regNumber,
+            ret.rating,
+            ret.votes,
+            ret.kyc_count
+        );
+    }
+
+    // Basic Password setting
+    function setPassword(string memory name,string memory password)
+        public isABank(msg.sender) returns(bool){
+            Passwords[name] = password;
+            return true;
+        }
+
 }
