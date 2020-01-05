@@ -14,13 +14,16 @@ contract Banks is kyc{
         require(sender == admin,"ONlY ADMIN HAS ACCESS TO THESE");
         _;
     }
-
+/*
+ * This function is adding a bank
+*/
     function addBank(string memory name,address _ethAddress,string memory reqNumber)public isAdmin(msg.sender) returns(uint8){
         banks[_ethAddress] = Bank({
             ethAddress: _ethAddress,
             bankName: name,
             regNumber: reqNumber,
             rating:0,
+            votes:0,
             kyc_count:0
         });
         bankAddresses.push(_ethAddress);

@@ -24,6 +24,7 @@ contract kyc {
         string bankName;
         string regNumber;       //unique
         uint rating;
+        uint votes; // for upvoting
         uint kyc_count;
     }
 
@@ -70,6 +71,9 @@ contract kyc {
      */
      mapping(string => Customer) finalized_customers;
      string[] verified;
+
+     mapping (address=>mapping(address=>bool)) bankVotes; // To keep track of the banks that have voted for other banks
+                                            // It is of the form voting bank => voted bank => bool
 
     /**
      * Constructor of the contract.
@@ -289,4 +293,35 @@ contract kyc {
         return (userNames,hashes,allowed);
     }
 
+    /*
+    * This function is up voting a bank only if it previously hasn't
+    * @param {public} vote Address of the bank to be upvoted
+    */
+
+    function upVoteBank(address vote)public isABank(msg.sender) returns(uint8){
+        if(bankVotes[msg.sender][vote] == false){
+            bankVotes[msg.sender][vote] = true;
+            banks[vote].votes = banks[vote].votes + 100;
+            banks[vote].rating = banks[vote].votes/bankAddresses.length;
+            return 1;
+        }
+        return 0;
+    }
+    // To make sure only banks can call the functions
+    modifier isABank(address bank){
+        require(banks[bank].ethAddress != address(0),"you are not a bank");
+        _;
+    }
+
+    //Get customer rating
+    function getCustomerRating(string memory name)public view returns(uint){
+        return customers[name].rating;
+    }
+
+    // Bank's rating
+    function getBankRating(address bank)public view returns(uint){
+        return banks[bank].rating;
+    }
+
+    
 }
