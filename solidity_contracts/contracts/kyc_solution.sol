@@ -84,6 +84,9 @@ contract kyc {
         admin = _admin;
     }
 
+    //Events
+    event kycAdded(address indexed bank,string indexed name);
+    event customerAdded(address indexed bank,string indexed name);
     /**
      * Record a new KYC request on behalf of a customer
      * The sender of message call is the bank itself
@@ -91,7 +94,7 @@ contract kyc {
      * @param  {address} _bankEthAddress The ethAddress of the bank issuing this request
      * @return {bool}        True if this function execution was successful
      */
-    function addKycRequest(string memory _userName, string memory _customerData) public returns (uint8) {
+    function addKycRequest(string memory _userName, string memory _customerData) public isBank(msg.sender) returns (uint8) {
         // Check that the user's KYC has not been done before, the Bank is a valid bank and it is allowed to perform KYC.
         require(kycRequests[_customerData].bank == address(0), "This user already has a KYC request with same data in process.");
         //bytes memory uname = new bytes(bytes(_userName));
@@ -99,6 +102,7 @@ contract kyc {
         kycRequests[_customerData].data_hash = _customerData;
         kycRequests[_customerData].userName = _userName;
         kycRequests[_customerData].bank = msg.sender;
+        banks[msg.sender].kyc_count = banks[msg.sender].kyc_count + 1;
         if((banks[msg.sender].rating)*2 > 100){ // keep the rating interms of a multiple of 100*actual_rating(decimal value)
             kycRequests[_customerData].isAllowed = true;
         }
@@ -106,6 +110,7 @@ contract kyc {
             kycRequests[_customerData].isAllowed = false;
         }
         customerDataList.push(_customerData);
+        emit kycAdded(msg.sender,_userName);
         return 1;
     }
 
@@ -114,18 +119,19 @@ contract kyc {
      * @param {string} _userName Name of the customer to be added
      * @param {string} _hash Hash of the customer's ID submitted for KYC
      */
-    function addCustomer(string memory _userName, string memory _customerData) public returns (uint8){
+    function addCustomer(string memory _userName, string memory _customerData) public isBank(msg.sender) returns (uint8){
         require(
             customers[_userName].bank == address(0),
         "This customer is already present, please call modifyCustomer to edit the customer data"
         );
-        require(kycRequests[_userName].isAllowed == false,"It is not allowed"); // if invalid bank adds a request dont process it
+        require(kycRequests[_userName].isAllowed == true,"It is not allowed"); // if invalid bank adds a request dont process it
         customers[_userName].userName = _userName;
         customers[_userName].data_hash = _customerData;
         customers[_userName].bank = msg.sender;
         customers[_userName].upvotes = 1;
         customers[_userName].rating = (customers[_userName].upvotes*100)/bankAddresses.length;
         customerNames.push(_userName);
+        emit customerAdded(msg.sender,_userName);
         return 1;
     }
 
@@ -134,7 +140,7 @@ contract kyc {
      * @param  {string} _userName Name of the customer
      * @return {uint8}         A 0 indicates failure, 1 indicates success
      */
-    function removeKYCRequest(string memory _userName) public returns (uint8) {
+    function removeKYCRequest(string memory _userName) public isBank(msg.sender) returns (uint8) {
         uint8 i = 0;
         for (uint256 i = 0; i < customerDataList.length; i++){
             if (stringsEquals(kycRequests[customerDataList[i]].userName,_userName)) {
@@ -155,7 +161,7 @@ contract kyc {
      * @param  {string} _userName Name of the customer
      * @return {uint8}         A 0 indicates failure, 1 indicates success
      */
-    function removeCustomer(string memory _userName) public returns (uint8) {
+    function removeCustomer(string memory _userName) public isBank(msg.sender) returns (uint8) {
             for(uint i = 0;i < customerNames.length;i++)
             {
                 if(stringsEquals(customerNames[i],_userName))
@@ -179,7 +185,7 @@ contract kyc {
      * @param  {public} _hash New hash of the updated ID provided by the customer
      * @return {uint8}         A 0 indicates failure, 1 indicates success
      */
-    function modifyCustomer(string memory _userName, string memory _newcustomerData) public returns (uint8){
+    function modifyCustomer(string memory _userName, string memory _newcustomerData) public isBank(msg.sender) returns (uint8){
         for(uint i = 0;i < customerNames.length;i++) {
              if(stringsEquals(customerNames[i],_userName)){
                 if(removeFromVerified(_userName) == 1){// this function checks if the customer is verified if so deletes it from the list
@@ -237,7 +243,7 @@ contract kyc {
      * Add a new upvote from a bank
      * @param {public} _userName Name of the customer to be upvoted
      */
-    function Upvote(string memory _userName) public returns (uint8) {
+    function Upvote(string memory _userName) public isBank(msg.sender) returns (uint8) {
         require(upvotes[_userName][msg.sender] == 0,"You have already cast your vote");
         for(uint i = 0;i < customerNames.length;i++)
             {
@@ -350,5 +356,18 @@ contract kyc {
             Passwords[name] = password;
             return true;
         }
+
+    //Checks if you are a registered bank
+    modifier isBank(address bank){
+        bool isB = false;
+        for(uint i = 0;i<bankAddresses.length;i++){
+            if(bankAddresses[i] == bank){
+                isB = true;
+                break;
+            }
+        }
+        require(isB == true,"Not a bank");
+        _;
+    }
 
 }
