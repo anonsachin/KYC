@@ -87,6 +87,8 @@ contract kyc {
     //Events
     event kycAdded(address indexed bank,string indexed name);
     event customerAdded(address indexed bank,string indexed name);
+    event verificationDone(string indexed name,uint rating);
+
     /**
      * Record a new KYC request on behalf of a customer
      * The sender of message call is the bank itself
@@ -142,7 +144,7 @@ contract kyc {
      * @return {uint8}         A 0 indicates failure, 1 indicates success
      */
     function removeKYCRequest(string memory _userName) public isBank(msg.sender) returns (uint8) {
-        uint8 i = 0;
+        uint8 k = 0;
         for (uint256 i = 0; i < customerDataList.length; i++){
             if (stringsEquals(kycRequests[customerDataList[i]].userName,_userName)) {
                 delete kycRequests[customerDataList[i]];
@@ -151,10 +153,10 @@ contract kyc {
                     customerDataList[j-1] = customerDataList[j];
                 }
                 customerDataList.length --;
-                i = 1;
+                k = 1;
             }
         }
-        return i; // 0 is returned if no request with the input username is found.
+        return k; // 0 is returned if no request with the input username is found.
     }
 
     /**
@@ -173,6 +175,13 @@ contract kyc {
                         customerNames[j-1] = customerNames[j];
                     }
                     customerNames.length--;
+                    if(removeFromVerified(_userName) == 1){ //if customer is verified it is deleted
+                        for(uint j = 0;j<bankAddresses.length;j++){ // delete votes
+                            if(upvotes[_userName][bankAddresses[j]] != 0){
+                            delete upvotes[_userName][bankAddresses[j]];
+                            }
+                        }
+                    }
                     return 1;
                 }
 
@@ -193,6 +202,12 @@ contract kyc {
                         customers[_userName].data_hash = _newcustomerData; // and only then updates the data
                         customers[_userName].rating = 0;
                         customers[_userName].upvotes = 0;
+                        customers[_userName].bank = msg.sender;
+                    }
+                    for(uint j = 0;j<bankAddresses.length;j++){ // delete votes
+                        if(upvotes[_userName][bankAddresses[j]] != 0){
+                        delete upvotes[_userName][bankAddresses[j]];
+                        }
                     }
                     return 1;
                 }
@@ -222,6 +237,7 @@ contract kyc {
         }
         finalized_customers[name] = good;
         verified.push(name);
+        emit verificationDone(name,good.rating);
         return 1;
     }
     // Remove from Verified
