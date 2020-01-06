@@ -128,9 +128,10 @@ contract kyc {
         customers[_userName].userName = _userName;
         customers[_userName].data_hash = _customerData;
         customers[_userName].bank = msg.sender;
-        customers[_userName].upvotes = 1;
-        customers[_userName].rating = (customers[_userName].upvotes*100)/bankAddresses.length;
+        customers[_userName].upvotes = 100;
+        customers[_userName].rating = (customers[_userName].upvotes)/bankAddresses.length;
         customerNames.push(_userName);
+        upvotes[_userName][msg.sender] = now;//storing the timestamp when vote was casted, not required though, additional
         emit customerAdded(msg.sender,_userName);
         return 1;
     }
@@ -249,12 +250,11 @@ contract kyc {
             {
                 if(stringsEquals(customerNames[i],_userName))
                 {
-                    customers[_userName].upvotes++;
-                    customers[_userName].rating = (customers[_userName].upvotes*100)/bankAddresses.length;
+                    customers[_userName].upvotes = customers[_userName].upvotes + 100;
+                    customers[_userName].rating = (customers[_userName].upvotes)/bankAddresses.length;
                     upvotes[_userName][msg.sender] = now;//storing the timestamp when vote was casted, not required though, additional
                     if(customers[_userName].rating > 50){
                         addToVerified(_userName,customers[_userName]);
-                        removeCustomer(_userName);
                     }
                     return 1;
                 }
